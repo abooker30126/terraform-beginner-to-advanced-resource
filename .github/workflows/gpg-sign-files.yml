@@ -1,0 +1,122 @@
+name: GPG Sign Modified Files
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sign-files:
+    name: Sign Modified Files with GPG
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GPG
+        run: sudo apt-get install -y gnupg
+
+      - name: Import GPG private key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --passphrase "$GPG_PASSPHRASE" --import
+          GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format=long | grep '^sec' | head -n1 | awk '{print $2}' | cut -d'/' -f2)
+          echo "GPG_KEY_ID=$GPG_KEY_ID" >> "$GITHUB_ENV"
+
+      - name: Get list of modified files
+        id: changed-files
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -E '\.(sh|py|yml|tf)$' || true)
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Sign modified files
+        if: steps.changed-files.outputs.files != ''
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.files }}
+        run: |
+          chmod +x .github/scripts/sign-files.sh
+          .github/scripts/sign-files.sh "$CHANGED_FILES"
+
+      - name: Commit signatures
+        if: steps.changed-files.outputs.files != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add '*.gpg.sig'
+          if git diff --cached --quiet; then
+            echo "No new signatures to commit."
+          else
+            git commit -m "chore: add GPG signatures for modified files [skip ci]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
+      - name: Build signature report
+        if: steps.changed-files.outputs.files != ''
+        id: sig-report
+        run: |
+          REPORT="## GPG Signature Report\n\n"
+          REPORT+="The following files were signed with GPG key \`$GPG_KEY_ID\`:\n\n"
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            SIG_FILE="${file}.gpg.sig"
+            if [ -f "$SIG_FILE" ]; then
+              REPORT+="- ✅ \`$file\` → \`$SIG_FILE\`\n"
+            else
+              REPORT+="- ⚠️ \`$file\` (signature not created)\n"
+            fi
+          done <<< "${{ steps.changed-files.outputs.files }}"
+          REPORT+="\n### Verify a signature\n"
+          REPORT+="\`\`\`bash\ngpg --verify <file>.gpg.sig <file>\n\`\`\`\n"
+          echo "report<<EOF" >> "$GITHUB_OUTPUT"
+          printf "%b" "$REPORT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Post signature report as PR comment
+        if: steps.changed-files.outputs.files != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `${{ steps.sig-report.outputs.report }}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.startsWith('## GPG Signature Report')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: No signable files found
+        if: steps.changed-files.outputs.files == ''
+        run: echo "No .sh, .py, .yml, or .tf files were modified in this PR. Skipping signing."
