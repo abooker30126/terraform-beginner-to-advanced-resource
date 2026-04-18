@@ -17,7 +17,7 @@ This repository contains all the code files, labs, and reference documentation u
 - [Project Structure](#project-structure)
 - [Course Navigation](#course-navigation)
 - [Community & Support](#community--support)
-- [About the Author](#about-the-author)
+- [About the Me](#about-the-author)
 
 ---
 
@@ -116,10 +116,10 @@ Welcome to the community, and we look forward to seeing you certified! 🎉
 
 ---
 
-## About the Author
+## About Me
 
 <details>
-<summary>👋 About Tony Booker</summary>
+<summary>👋 Tony Booker</summary>
 
 **AI Security • Cloud Security • Autonomous Systems • Drone Engineering**
 
