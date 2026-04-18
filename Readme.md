@@ -187,8 +187,6 @@ I'm a security-minded engineer pursuing my Master's in Artificial Intelligence, 
 - 🤖 Learning new ways to merge AI with real-world robotics
 
 ### 📬 Connect
-
-- 💼 [LinkedIn](https://www.linkedin.com/in/tony-booker) — Professional updates and insights
 - 🐙 [GitHub](https://github.com/abooker30126) — Code and projects
 
 </details>
