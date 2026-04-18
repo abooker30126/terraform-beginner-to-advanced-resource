@@ -17,7 +17,7 @@ This repository contains all the code files, labs, and reference documentation u
 - [Project Structure](#project-structure)
 - [Course Navigation](#course-navigation)
 - [Community & Support](#community--support)
-- [About the Me](#about-the-author)
+- [About Tony Booker](#about-the-author)
 
 ---
 
