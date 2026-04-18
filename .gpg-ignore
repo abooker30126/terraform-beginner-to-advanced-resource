@@ -1,0 +1,29 @@
+# .gpg-ignore
+# Files and glob patterns listed here are skipped by the GPG signing workflow.
+# Syntax mirrors .gitignore: one pattern per line; lines starting with # are comments.
+
+# Dependency directories
+node_modules/
+vendor/
+.terraform/
+
+# Build / dist artifacts
+dist/
+build/
+*.zip
+*.tar.gz
+*.tgz
+
+# Terraform state and lock files (auto-generated; signing adds no value)
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Generated or temporary files
+*.tmp
+*.bak
+*~
+
+# Test fixtures that change frequently
+tests/fixtures/
+spec/fixtures/
