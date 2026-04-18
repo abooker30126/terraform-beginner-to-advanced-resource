@@ -1,0 +1,34 @@
+# .gpg-ignore
+# Files and directories to skip during GPG signing.
+# Supports glob patterns (shell-style).  One pattern per line.
+# Lines starting with # are comments.
+
+# Dependency directories
+node_modules/**
+vendor/**
+.terraform/**
+
+# Terraform generated / cached files
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/terraform.tfstate.d/**
+
+# Editor / OS artifacts
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Existing signature files (never sign a signature)
+*.gpg.sig
+*.asc
+
+# Compiled / generated output
+dist/**
+build/**
+*.pyc
+__pycache__/**
+
+# CI configuration (managed separately)
+.github/workflows/**
