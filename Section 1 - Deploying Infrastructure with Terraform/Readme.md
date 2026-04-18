@@ -29,5 +29,5 @@ The code mentioned in this document are used in the HashiCorp Certified Terrafor
    [PlDg]: <./state-file.md>   
    [PlDh]: <./desired-current-state.md>   
    [PlDi]: <./clarity-state-file.md>   
-   [PlDj]: <./refresh.tf>
+   [PlDj]: <./refresh.md>
    [PlDk]: <./provider-versioning.md>
